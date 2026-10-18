@@ -209,8 +209,25 @@ export const endpoints = {
 
   /** Players */
   players: {
+    /**
+     * Live online-player count.
+     *
+     * NOTE (#FE-102): the backend does not expose this route yet, so callers
+     * must hide the counter gracefully when a request fails instead of polling
+     * it on a tight interval. Pair with the backend "players online" endpoint
+     * issue before surfacing a count to users.
+     */
     online: () => `${API_BASE}/v1/players/online`,
     export: () => `${API_BASE}/v1/players/me/export`,
+    /**
+     * Rating (ELO) history for a single player.
+     *
+     * NOTE (#FE-103): players are keyed by their UUID / wallet address on the
+     * backend, *not* by the integer `user_id`. Pass the player identifier the
+     * backend expects. Pairs with the backend player-stats endpoint issue.
+     */
+    eloHistory: (playerId: string) =>
+      `${API_BASE}/v1/players/${encodeURIComponent(playerId)}/elo-history`,
     /** Wallet linking (#FE-97): challenge → Freighter signMessage → verify. */
     walletChallenge: () => `${API_BASE}/v1/players/me/wallet/challenge`,
     walletVerify: () => `${API_BASE}/v1/players/me/wallet/verify`,
@@ -228,12 +245,6 @@ export const endpoints = {
     create: () => `${API_BASE}/api/v1/tournaments`,
     register: (id: string) =>
       `${API_BASE}/api/v1/tournaments/${encodeURIComponent(id)}/register`,
-  },
-
-  /** Profile & Preferences */
-  profile: {
-    preferences: () => `${API_BASE}/v1/profile/preferences`,
-    theme: () => `${API_BASE}/v1/profile/theme`,
   },
 
   /** Horizon */
