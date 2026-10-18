@@ -40,8 +40,12 @@ interface UseChessSocketReturn {
   status: ChessSocketStatus;
   gameId: string | null;
   lastOpponentMove: ChessMove | null;
+  /** True once the opponent has resigned (FE-117 / #1358). */
+  opponentResigned: boolean;
   lastSyncedState: SyncedGameState | null;
   sendMove: (move: ChessMove) => void;
+  /** Sends an explicit resign message to the server (FE-117 / #1358). */
+  sendResign: () => void;
   disconnect: () => void;
   reconnect: () => void;
 }
@@ -78,6 +82,7 @@ export function useChessSocket(gameId: string | null): UseChessSocketReturn {
     setStatusState(s);
   }, []);
   const [lastOpponentMove, setLastOpponentMove] = useState<ChessMove | null>(null);
+  const [opponentResigned, setOpponentResigned] = useState(false);
   const [lastSyncedState, setLastSyncedState] = useState<SyncedGameState | null>(null);
 
   
@@ -224,6 +229,9 @@ export function useChessSocket(gameId: string | null): UseChessSocketReturn {
                 (move) => (move.ply ?? 0) > lastAckedPlyRef.current,
               );
             }
+          } else if (data.type === "resign" || (data.type === "game_over" && /resign/i.test(String(data.reason ?? "")))) {
+            console.log(`[WebSocket] Opponent resigned`);
+            setOpponentResigned(true);
           } else if (data.type === "sync") {
             console.log(`[WebSocket] Received board state sync:`, data);
             const lastPly =
@@ -335,6 +343,19 @@ export function useChessSocket(gameId: string | null): UseChessSocketReturn {
   }, [createWebSocket, dispatchMove]);
 
   /**
+   * Sends an explicit resign message so the server can complete the game and
+   * notify the opponent, instead of just dropping the socket (FE-117 / #1358).
+   */
+  const sendResign = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: "resign", gameId }));
+      console.log("[WebSocket] Resign message sent");
+    } else {
+      console.warn("[WebSocket] Cannot resign — socket is not open");
+    }
+  }, [gameId]);
+
+  /**
    * Manually disconnects from the WebSocket server.
    * Clears the move queue and prevents automatic reconnection.
    */
@@ -417,6 +438,7 @@ export function useChessSocket(gameId: string | null): UseChessSocketReturn {
   // Initialize WebSocket when gameId changes
   useEffect(() => {
     let active = true;
+    setOpponentResigned(false);
     if (gameId) {
       createWebSocket().then(ws => {
         if (!active && ws) {
@@ -454,8 +476,10 @@ export function useChessSocket(gameId: string | null): UseChessSocketReturn {
     status,
     gameId,
     lastOpponentMove,
+    opponentResigned,
     lastSyncedState,
     sendMove,
+    sendResign,
     disconnect,
     reconnect,
   };

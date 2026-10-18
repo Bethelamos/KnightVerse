@@ -59,7 +59,10 @@ const PlayGameEngine = dynamic(
 export default function PlayOnlinePage() {
   const searchParams = useSearchParams();
   const fen = searchParams.get("fen") ?? undefined;
+  // FE-116: initialise both clocks from the chosen time control (?minutes=).
+  const minutes = Number(searchParams.get("minutes"));
+  const initialMinutes = Number.isFinite(minutes) && minutes > 0 ? minutes : undefined;
   // FE-115: matchmaking passes the assigned colour (e.g. ?color=black).
   const playerColor = searchParams.get("color") === "black" ? "black" : "white";
-  return <PlayGameEngine fen={fen} playerColor={playerColor} />;
+  return <PlayGameEngine fen={fen} initialMinutes={initialMinutes} playerColor={playerColor} />;
 }
