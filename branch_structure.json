@@ -1,0 +1,18 @@
+{
+  "default_branch": "main",
+  "branches": [
+    "fix/issue-1365-fe-124-home-page-duplicates-herochessgame-logic",
+    "main",
+    "origin"
+  ],
+  "parent": {
+    "fix/issue-1365-fe-124-home-page-duplicates-herochessgame-logic": "main",
+    "main": null,
+    "origin": "main"
+  },
+  "order": [
+    "main",
+    "fix/issue-1365-fe-124-home-page-duplicates-herochessgame-logic",
+    "origin"
+  ]
+}
